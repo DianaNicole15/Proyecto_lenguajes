@@ -5,7 +5,9 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Main {
 
@@ -72,6 +74,58 @@ public class Main {
     }
 
     // ==========================================
+    // VALIDACIÓN DE ENTRADAS
+    // Cada método devuelve el valor ya limpio o lanza IllegalArgumentException
+    // con un mensaje listo para mostrar al usuario.
+    // ==========================================
+    public static class Validador {
+        public static final int MAX_TEXTO = 60;
+        public static final int MAX_CANTIDAD = 1_000_000;
+        public static final double MAX_PRECIO = 1_000_000;
+
+        public static String codigo(String valor) {
+            String c = valor == null ? "" : valor.trim().toUpperCase();
+            if (!c.matches("[A-Z0-9-]{1,20}")) {
+                throw new IllegalArgumentException("El código solo admite letras, números y guion (máximo 20 caracteres).");
+            }
+            return c;
+        }
+
+        public static String texto(String valor, String campo) {
+            String t = valor == null ? "" : valor.trim();
+            if (t.isEmpty()) throw new IllegalArgumentException(campo + " es obligatorio.");
+            if (t.length() > MAX_TEXTO) throw new IllegalArgumentException(campo + " no puede superar " + MAX_TEXTO + " caracteres.");
+            return t;
+        }
+
+        public static double precio(String valor) {
+            double p;
+            try {
+                p = Double.parseDouble(valor == null ? "" : valor.trim().replace("$", ""));
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("El precio debe ser un número (ejemplo: 125.50).");
+            }
+            if (Double.isNaN(p) || Double.isInfinite(p) || p <= 0 || p > MAX_PRECIO) {
+                throw new IllegalArgumentException("El precio debe ser mayor a 0 y no superar " + (long) MAX_PRECIO + ".");
+            }
+            return Math.round(p * 100.0) / 100.0;
+        }
+
+        public static int entero(String valor, String campo, int minimo) {
+            int n;
+            try {
+                n = Integer.parseInt(valor == null ? "" : valor.trim());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(campo + " debe ser un número entero.");
+            }
+            if (n < minimo || n > MAX_CANTIDAD) {
+                throw new IllegalArgumentException(campo + " debe estar entre " + minimo + " y " + MAX_CANTIDAD + ".");
+            }
+            return n;
+        }
+    }
+
+    // ==========================================
     // BASE DE DATOS EN MEMORIA Y CONFIGURACIÓN
     // ==========================================
     public static List<Producto> listaProductos = new ArrayList<>();
@@ -88,6 +142,13 @@ public class Main {
         listaProductos.add(new Producto("P002", "Mouse Inalámbrico", 350.00, "Electrónica", 2, 5)); // Bajo inventario
         listaProductos.add(new Producto("P003", "Refrigerador LG", 9800.50, "Línea Blanca", 0, 2)); // Agotado
         listaProductos.add(new Producto("P004", "Cafetera de Grano", 1450.00, "Línea Blanca", 12, 4));
+    }
+
+    static Producto buscarPorCodigo(String codigo) {
+        for (Producto p : listaProductos) {
+            if (p.getCodigo().equalsIgnoreCase(codigo)) return p;
+        }
+        return null;
     }
 
     // ==========================================
@@ -113,10 +174,11 @@ public class Main {
     public static class VentanaLogin extends JFrame {
         private JTextField txtUsuario;
         private JPasswordField txtContrasena;
+        private int intentosFallidos = 0;
 
         public VentanaLogin() {
             setTitle("Punto de venta - Inicio de sesión");
-            setSize(450, 320);
+            setSize(450, 290);
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             setLocationRelativeTo(null);
             setResizable(false);
@@ -152,28 +214,39 @@ public class Main {
             btnIngresar.setBounds(160, 215, 120, 30);
             panel.add(btnIngresar);
 
-            JButton btnNuevoUsuario = new JButton("Crear nuevo usuario");
-            btnNuevoUsuario.setFont(new Font("SansSerif", Font.PLAIN, 10));
-            btnNuevoUsuario.setBounds(150, 255, 140, 22);
-            panel.add(btnNuevoUsuario);
-
-            btnIngresar.addActionListener(e -> {
-                String user = txtUsuario.getText();
-                String pass = new String(txtContrasena.getPassword());
-                if (user.equals("admin") && pass.equals("admin")) {
-                    JOptionPane.showMessageDialog(this, "¡Bienvenido al Sistema!", "Acceso Exitoso", JOptionPane.INFORMATION_MESSAGE);
-                    new VentanaPrincipal().setVisible(true);
-                    dispose();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos.", "Error de Autenticación", JOptionPane.ERROR_MESSAGE);
-                }
-            });
-
-            btnNuevoUsuario.addActionListener(e ->
-                    JOptionPane.showMessageDialog(this, "Módulo de creación de usuarios deshabilitado en esta versión demo.", "Información", JOptionPane.INFORMATION_MESSAGE)
-            );
+            btnIngresar.addActionListener(e -> iniciarSesion());
+            txtContrasena.addActionListener(e -> iniciarSesion());
+            getRootPane().setDefaultButton(btnIngresar);
 
             add(panel);
+        }
+
+        private void iniciarSesion() {
+            String user = txtUsuario.getText().trim();
+            String pass = new String(txtContrasena.getPassword());
+
+            if (user.isEmpty() || pass.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Escriba su usuario y contraseña.", "Datos incompletos", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (user.length() > 30 || pass.length() > 50) {
+                JOptionPane.showMessageDialog(this, "Usuario o contraseña demasiado largos.", "Datos inválidos", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            if (user.equals("admin") && pass.equals("admin")) {
+                JOptionPane.showMessageDialog(this, "¡Bienvenido al Sistema!", "Acceso Exitoso", JOptionPane.INFORMATION_MESSAGE);
+                new VentanaPrincipal().setVisible(true);
+                dispose();
+            } else {
+                intentosFallidos++;
+                txtContrasena.setText("");
+                if (intentosFallidos >= 3) {
+                    JOptionPane.showMessageDialog(this, "Demasiados intentos fallidos. El programa se cerrará.", "Acceso bloqueado", JOptionPane.ERROR_MESSAGE);
+                    System.exit(0);
+                }
+                JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos. Intento " + intentosFallidos + " de 3.", "Error de Autenticación", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
@@ -201,7 +274,30 @@ public class Main {
             pestanas.addTab("Administrar", panelAdmin);
             pestanas.addTab("Historial y Reportes", panelHistorial);
 
-            add(pestanas);
+            // Al abrir la pestaña de reportes se muestran los datos más recientes
+            pestanas.addChangeListener(e -> {
+                if (pestanas.getSelectedComponent() == panelHistorial) panelHistorial.actualizarReportes();
+            });
+
+            // Barra superior con el botón de cerrar sesión
+            JPanel barraSuperior = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+            JButton btnCerrarSesion = new JButton("Cerrar sesión");
+            btnCerrarSesion.addActionListener(e -> cerrarSesion());
+            barraSuperior.add(btnCerrarSesion);
+
+            setLayout(new BorderLayout());
+            add(barraSuperior, BorderLayout.NORTH);
+            add(pestanas, BorderLayout.CENTER);
+        }
+
+        private void cerrarSesion() {
+            int opcion = JOptionPane.showConfirmDialog(this,
+                    "¿Desea cerrar sesión?\nLa venta que esté en curso sin cobrar se perderá.",
+                    "Cerrar sesión", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (opcion == JOptionPane.YES_OPTION) {
+                dispose();
+                new VentanaLogin().setVisible(true);
+            }
         }
     }
 
@@ -257,6 +353,9 @@ public class Main {
             JButton btnAgregarCarrito = new JButton("Agregar a Venta");
             subPanelAcciones.add(btnAgregarCarrito);
 
+            JButton btnQuitar = new JButton("Quitar seleccionado");
+            subPanelAcciones.add(btnQuitar);
+
             JButton btnCobrar = new JButton("Cobrar / Salida");
             btnCobrar.setFont(new Font("SansSerif", Font.BOLD, 14));
             btnCobrar.setBackground(new Color(220, 220, 220));
@@ -274,30 +373,38 @@ public class Main {
             // Eventos
             btnAgregarCarrito.addActionListener(e -> agregarItem());
             txtCodigoScan.addActionListener(e -> agregarItem());
+            txtBusquedaNombre.addActionListener(e -> agregarItem());
+            btnQuitar.addActionListener(e -> quitarSeleccionado());
             btnCobrar.addActionListener(e -> procesarCobro());
         }
 
         private void agregarItem() {
             String codigo = txtCodigoScan.getText().trim();
             String nombreBusqueda = txtBusquedaNombre.getText().trim().toLowerCase();
-            int cantidad;
 
-            try {
-                cantidad = Integer.parseInt(txtCantidadVenta.getText().trim());
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Ingrese una cantidad válida.", "Error", JOptionPane.ERROR_MESSAGE);
+            if (codigo.isEmpty() && nombreBusqueda.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Escriba un código o parte del nombre del producto.", "Aviso", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
+            int cantidad;
+            try {
+                cantidad = Validador.entero(txtCantidadVenta.getText(), "La cantidad", 1);
+            } catch (IllegalArgumentException e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Cantidad inválida", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Si se escribe código se busca por código; si no, por nombre
             Producto productoEncontrado = null;
-            for (Producto p : listaProductos) {
-                if (!codigo.isEmpty() && p.getCodigo().equalsIgnoreCase(codigo)) {
-                    productoEncontrado = p;
-                    break;
-                }
-                if (!nombreBusqueda.isEmpty() && p.getNombre().toLowerCase().contains(nombreBusqueda)) {
-                    productoEncontrado = p;
-                    break;
+            if (!codigo.isEmpty()) {
+                productoEncontrado = buscarPorCodigo(codigo);
+            } else {
+                for (Producto p : listaProductos) {
+                    if (p.getNombre().toLowerCase().contains(nombreBusqueda)) {
+                        productoEncontrado = p;
+                        break;
+                    }
                 }
             }
 
@@ -306,9 +413,19 @@ public class Main {
                 return;
             }
 
-            // Validar existencia suficiente
-            if (cantidad > productoEncontrado.getStock()) {
-                JOptionPane.showMessageDialog(this, "⚠️ Alerta: ¡Cantidad mayor a la existente en stock!\nStock disponible: " + productoEncontrado.getStock(), "Alerta de Inventario", JOptionPane.WARNING_MESSAGE);
+            if (productoEncontrado.getStock() == 0) {
+                JOptionPane.showMessageDialog(this, "El producto [" + productoEncontrado.getNombre() + "] está agotado.", "Producto agotado", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Validar existencia suficiente, contando lo que ya está en la venta actual
+            int yaEnVenta = 0;
+            for (ItemVenta item : carrito) {
+                if (item.producto == productoEncontrado) yaEnVenta += item.cantidad;
+            }
+            if (yaEnVenta + cantidad > productoEncontrado.getStock()) {
+                JOptionPane.showMessageDialog(this, "⚠️ Alerta: ¡Cantidad mayor a la existente en stock!\nStock disponible: " + productoEncontrado.getStock()
+                        + (yaEnVenta > 0 ? "\nYa agregó en esta venta: " + yaEnVenta : ""), "Alerta de Inventario", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -328,6 +445,17 @@ public class Main {
             txtCantidadVenta.setText("1");
         }
 
+        private void quitarSeleccionado() {
+            int fila = tablaVenta.getSelectedRow();
+            if (fila < 0) {
+                JOptionPane.showMessageDialog(this, "Seleccione la línea de la venta que desea quitar.", "Aviso", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            carrito.remove(fila);
+            modeloTablaVenta.removeRow(fila);
+            recalcularTotal();
+        }
+
         private void recalcularTotal() {
             double total = 0;
             for (ItemVenta item : carrito) {
@@ -342,8 +470,26 @@ public class Main {
                 return;
             }
 
+            // Se revisa todo ANTES de descontar: si algo falla, no se modifica nada.
+            Map<Producto, Integer> porProducto = new LinkedHashMap<>();
+            for (ItemVenta item : carrito) {
+                porProducto.merge(item.producto, item.cantidad, Integer::sum);
+            }
+            for (Map.Entry<Producto, Integer> e : porProducto.entrySet()) {
+                Producto p = e.getKey();
+                if (!listaProductos.contains(p)) {
+                    JOptionPane.showMessageDialog(this, "El producto [" + p.getNombre() + "] ya no existe en el inventario.\nQuítelo de la venta.", "Venta no válida", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                if (e.getValue() > p.getStock()) {
+                    JOptionPane.showMessageDialog(this, "⚠️ Alerta: ¡Cantidad mayor a la existente en stock!\n[" + p.getNombre() + "] tiene " + p.getStock() + " y se piden " + e.getValue() + ".", "Alerta de Inventario", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            }
+
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String fechaHora = sdf.format(new Date());
+            List<String> alertas = new ArrayList<>();
 
             for (ItemVenta item : carrito) {
                 int stockAnterior = item.producto.getStock();
@@ -359,14 +505,19 @@ public class Main {
                         item.cantidad,
                         item.producto.getDepartamento()
                 ));
+            }
 
-                // Verificar alerta de reabastecimiento
-                if (item.producto.getStock() <= item.producto.getStockMinimo()) {
-                    JOptionPane.showMessageDialog(this, "⚠️ Alerta de Reabastecimiento:\nEl producto [" + item.producto.getNombre() + "] está por agotarse (Stock actual: " + item.producto.getStock() + ").", "Alerta de Stock Bajo", JOptionPane.WARNING_MESSAGE);
+            // Alerta de reabastecimiento, una sola vez por producto
+            for (Producto p : porProducto.keySet()) {
+                if (p.getStock() <= p.getStockMinimo()) {
+                    alertas.add("• " + p.getNombre() + " (stock actual: " + p.getStock() + ")");
                 }
             }
 
             JOptionPane.showMessageDialog(this, "✅ ¡Registro exitoso! Venta procesada correctamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            if (!alertas.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "⚠️ Alerta de Reabastecimiento. Por agotarse:\n" + String.join("\n", alertas), "Alerta de Stock Bajo", JOptionPane.WARNING_MESSAGE);
+            }
             carrito.clear();
             modeloTablaVenta.setRowCount(0);
             lblTotalPagar.setText("$00.00");
@@ -464,35 +615,40 @@ public class Main {
             // ACCIONES
             btnGuardar.addActionListener(e -> {
                 try {
-                    String codigo = txtRegCodigo.getText().trim();
-                    String nombre = txtRegNombre.getText().trim();
-                    double precio = Double.parseDouble(txtRegPrecio.getText().trim());
+                    String codigo = Validador.codigo(txtRegCodigo.getText());
+                    String nombre = Validador.texto(txtRegNombre.getText(), "El nombre");
+                    double precio = Validador.precio(txtRegPrecio.getText());
                     String depto = (String) cmbRegDepartamento.getSelectedItem();
-                    int stock = Integer.parseInt(txtRegStock.getText().trim());
-                    int min = Integer.parseInt(txtRegMinimo.getText().trim());
+                    if (depto == null) throw new IllegalArgumentException("Registre primero un departamento.");
+                    int stock = Validador.entero(txtRegStock.getText(), "La cantidad actual", 0);
+                    int min = Validador.entero(txtRegMinimo.getText(), "El stock mínimo", 0);
 
-                    if (codigo.isEmpty() || nombre.isEmpty()) {
-                        JOptionPane.showMessageDialog(this, "Complete todos los campos obligatorios.", "Error", JOptionPane.ERROR_MESSAGE);
-                        return;
+                    if (buscarPorCodigo(codigo) != null) {
+                        throw new IllegalArgumentException("Ya existe un producto con el código " + codigo + ".");
                     }
 
                     listaProductos.add(new Producto(codigo, nombre, precio, depto, stock, min));
                     actualizarTablaInventario();
                     JOptionPane.showMessageDialog(this, "✅ Producto registrado exitosamente.");
                     txtRegCodigo.setText(""); txtRegNombre.setText(""); txtRegPrecio.setText(""); txtRegStock.setText("");
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(this, "Verifique que precio y stock sean numéricos.", "Error", JOptionPane.ERROR_MESSAGE);
+                } catch (IllegalArgumentException ex) {
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), "Datos inválidos", JOptionPane.ERROR_MESSAGE);
                 }
             });
 
             btnGuardarDepto.addActionListener(e -> {
-                String nuevo = txtNuevoDepto.getText().trim();
-                if (!nuevo.isEmpty() && !listaDepartamentos.contains(nuevo)) {
+                try {
+                    String nuevo = Validador.texto(txtNuevoDepto.getText(), "El nombre del departamento");
+                    for (String d : listaDepartamentos) {
+                        if (d.equalsIgnoreCase(nuevo)) throw new IllegalArgumentException("El departamento \"" + d + "\" ya existe.");
+                    }
                     listaDepartamentos.add(nuevo);
                     actualizarComboDeptos();
                     actualizarListaDeptosText(txtAreaDeptos);
                     txtNuevoDepto.setText("");
                     JOptionPane.showMessageDialog(this, "Departamento guardado con éxito.");
+                } catch (IllegalArgumentException ex) {
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), "Datos inválidos", JOptionPane.ERROR_MESSAGE);
                 }
             });
 
@@ -505,9 +661,13 @@ public class Main {
                 Producto p = listaProductos.get(fila);
                 String nuevoPrecioStr = JOptionPane.showInputDialog(this, "Nuevo precio para [" + p.getNombre() + "]:", p.getPrecio());
                 if (nuevoPrecioStr != null) {
-                    p.setPrecio(Double.parseDouble(nuevoPrecioStr));
-                    actualizarTablaInventario();
-                    JOptionPane.showMessageDialog(this, "Modificación guardada.");
+                    try {
+                        p.setPrecio(Validador.precio(nuevoPrecioStr));
+                        actualizarTablaInventario();
+                        JOptionPane.showMessageDialog(this, "Modificación guardada.");
+                    } catch (IllegalArgumentException ex) {
+                        JOptionPane.showMessageDialog(this, ex.getMessage(), "Datos inválidos", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             });
 
@@ -517,9 +677,14 @@ public class Main {
                     JOptionPane.showMessageDialog(this, "Seleccione un producto a eliminar.");
                     return;
                 }
-                listaProductos.remove(fila);
-                actualizarTablaInventario();
-                JOptionPane.showMessageDialog(this, "Producto eliminado.");
+                Producto p = listaProductos.get(fila);
+                int opcion = JOptionPane.showConfirmDialog(this, "¿Eliminar [" + p.getCodigo() + " - " + p.getNombre() + "]?",
+                        "Confirmar eliminación", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                if (opcion == JOptionPane.YES_OPTION) {
+                    listaProductos.remove(fila);
+                    actualizarTablaInventario();
+                    JOptionPane.showMessageDialog(this, "Producto eliminado.");
+                }
             });
 
             btnEntradaMercancia.addActionListener(e -> {
@@ -532,8 +697,11 @@ public class Main {
                 String cantStr = JOptionPane.showInputDialog(this, "Cantidad de mercancía a ingresar para [" + p.getNombre() + "]:");
                 if (cantStr != null) {
                     try {
-                        int cantidadEntrada = Integer.parseInt(cantStr);
+                        int cantidadEntrada = Validador.entero(cantStr, "La cantidad", 1);
                         int stockAnt = p.getStock();
+                        if ((long) stockAnt + cantidadEntrada > Validador.MAX_CANTIDAD) {
+                            throw new IllegalArgumentException("La existencia resultante no puede superar " + Validador.MAX_CANTIDAD + ".");
+                        }
                         p.setStock(stockAnt + cantidadEntrada);
 
                         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -543,8 +711,8 @@ public class Main {
 
                         actualizarTablaInventario();
                         JOptionPane.showMessageDialog(this, "✅ Entrada de mercancía registrada con éxito. Stock actual: " + p.getStock());
-                    } catch (NumberFormatException ex) {
-                        JOptionPane.showMessageDialog(this, "Cantidad inválida.", "Error", JOptionPane.ERROR_MESSAGE);
+                    } catch (IllegalArgumentException ex) {
+                        JOptionPane.showMessageDialog(this, ex.getMessage(), "Datos inválidos", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             });
@@ -574,18 +742,24 @@ public class Main {
             }
         }
 
+        /** Entrecomilla los campos que contengan comas o comillas para no romper el CSV. */
+        private static String csv(String campo) {
+            if (campo.contains(",") || campo.contains("\"") || campo.contains("\n")) {
+                return "\"" + campo.replace("\"", "\"\"") + "\"";
+            }
+            return campo;
+        }
+
         private void exportarDatosCSV() {
-            try {
-                File archivo = new File("inventario_exportado.csv");
-                PrintWriter pw = new PrintWriter(archivo);
+            File archivo = new File("inventario_exportado.csv");
+            try (PrintWriter pw = new PrintWriter(archivo, "UTF-8")) {
                 pw.println("Codigo,Nombre,Precio,Stock,StockMinimo,Departamento");
                 for (Producto p : listaProductos) {
-                    pw.println(p.getCodigo() + "," + p.getNombre() + "," + p.getPrecio() + "," + p.getStock() + "," + p.getStockMinimo() + "," + p.getDepartamento());
+                    pw.println(csv(p.getCodigo()) + "," + csv(p.getNombre()) + "," + p.getPrecio() + "," + p.getStock() + "," + p.getStockMinimo() + "," + csv(p.getDepartamento()));
                 }
-                pw.close();
                 JOptionPane.showMessageDialog(this, "✅ Datos exportados exitosamente en: " + archivo.getAbsolutePath());
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error al exportar: " + ex.getMessage());
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error al exportar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -660,7 +834,7 @@ public class Main {
                 double valorProd = p.getPrecio() * p.getStock();
                 costoTotal += valorProd;
                 totalUnidades += p.getStock();
-                modeloReporteInv.addRow(new Object[]{p.getCodigo(), p.getNombre(), "$" + p.getPrecio(), p.getStock(), "$" + valorProd, p.getDepartamento()});
+                modeloReporteInv.addRow(new Object[]{p.getCodigo(), p.getNombre(), "$" + p.getPrecio(), p.getStock(), String.format("$%.2f", valorProd), p.getDepartamento()});
             }
             lblCostoTotalInv.setText(String.format("Costo Total Almacenado: $%.2f", costoTotal));
             lblCantidadTotalProd.setText("Total Unidades en Existencia: " + totalUnidades);
