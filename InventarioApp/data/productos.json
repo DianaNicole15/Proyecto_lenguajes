@@ -1,0 +1,10 @@
+[
+  {
+    "codigo": "001",
+    "nombre": "Articulo 1",
+    "categoria": "otro",
+    "precio": 450.0,
+    "existencia": 25,
+    "stockMinimo": 10
+  }
+]
