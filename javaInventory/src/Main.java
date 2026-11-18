@@ -168,6 +168,51 @@ public class Main {
         return null;
     }
 
+    /** Entrecomilla los campos que contengan comas o comillas para no romper el CSV. */
+    static String csv(String campo) {
+        if (campo.contains(",") || campo.contains("\"") || campo.contains("\n")) {
+            return "\"" + campo.replace("\"", "\"\"") + "\"";
+        }
+        return campo;
+    }
+
+    /** Exporta únicamente los movimientos correspondientes a ventas a un archivo CSV. */
+    static void exportarVentasCSV(Component parent) {
+        List<Movimiento> ventas = new ArrayList<>();
+        for (Movimiento m : listaMovimientos) {
+            if (m.getTipo().startsWith("SALIDA")) {
+                ventas.add(m);
+            }
+        }
+
+        if (ventas.isEmpty()) {
+            JOptionPane.showMessageDialog(parent, "Aún no hay ventas registradas para exportar.", "Sin registros", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        File archivo = new File("registro_ventas.csv");
+        try (PrintWriter pw = new PrintWriter(archivo, "UTF-8")) {
+            pw.println("FechaHora,Codigo,Producto,CantidadVendida,PrecioUnitario,TotalVenta,Categoria");
+            for (Movimiento m : ventas) {
+                Producto p = buscarPorCodigo(m.getCodigoProducto());
+                double precioUnit = (p != null) ? p.getPrecio() : 0.0;
+                double totalVenta = precioUnit * m.getCantidadMovimiento();
+                pw.println(
+                        csv(m.getFecha()) + "," +
+                                csv(m.getCodigoProducto()) + "," +
+                                csv(m.getNombreProducto()) + "," +
+                                m.getCantidadMovimiento() + "," +
+                                String.format(Locale.US, "%.2f", precioUnit) + "," +
+                                String.format(Locale.US, "%.2f", totalVenta) + "," +
+                                csv(m.getDepartamento())
+                );
+            }
+            JOptionPane.showMessageDialog(parent, "✅ Registro de ventas exportado exitosamente en:\n" + archivo.getAbsolutePath());
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(parent, "Error al exportar ventas: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     // ==========================================
     // MÉTODO PRINCIPAL (PUNTO DE ENTRADA)
     // ==========================================
@@ -254,7 +299,7 @@ public class Main {
         DefaultTableCellRenderer encabezado = new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable tabla, Object valor,
-                    boolean seleccionado, boolean foco, int fila, int columna) {
+                                                           boolean seleccionado, boolean foco, int fila, int columna) {
                 super.getTableCellRendererComponent(tabla, valor, false, false, fila, columna);
                 setFont(FUENTE.deriveFont(Font.BOLD));
                 setBackground(PETROLEO);
@@ -754,9 +799,12 @@ public class Main {
 
             // Pestaña 4: Importar / Exportar Datos
             JPanel panelIO = new JPanel(new GridBagLayout());
-            JButton btnExportarJSON = boton("Exportar datos a CSV");
+            JButton btnExportarJSON = boton("Exportar inventario a CSV");
+            JButton btnExportarVentasCSV = boton("Exportar ventas a CSV");
             JButton btnImportarJSON = boton("Importar Datos de Inventario");
             panelIO.add(btnExportarJSON);
+            panelIO.add(new JLabel("   "));
+            panelIO.add(btnExportarVentasCSV);
             panelIO.add(new JLabel("   "));
             panelIO.add(btnImportarJSON);
             subPestanasAdmin.addTab("Importar / Exportar", panelIO);
@@ -869,6 +917,7 @@ public class Main {
             });
 
             btnExportarJSON.addActionListener(e -> exportarDatosCSV());
+            btnExportarVentasCSV.addActionListener(e -> exportarVentasCSV(this));
             btnImportarJSON.addActionListener(e -> JOptionPane.showMessageDialog(this, "Simulación de importación masiva completada con éxito."));
         }
 
@@ -907,14 +956,6 @@ public class Main {
             for (Producto p : listaProductos) {
                 modeloTablaAdmin.addRow(new Object[]{p.getCodigo(), p.getNombre(), "$" + p.getPrecio(), p.getStock(), p.getStockMinimo(), p.getDepartamento()});
             }
-        }
-
-        /** Entrecomilla los campos que contengan comas o comillas para no romper el CSV. */
-        private static String csv(String campo) {
-            if (campo.contains(",") || campo.contains("\"") || campo.contains("\n")) {
-                return "\"" + campo.replace("\"", "\"\"") + "\"";
-            }
-            return campo;
         }
 
         private void exportarDatosCSV() {
@@ -982,6 +1023,11 @@ public class Main {
             JTable tablaMovs = new JTable(modeloMovimientos);
             panelMovs.add(franja("Reporte de movimientos"), BorderLayout.NORTH);
             panelMovs.add(tablaEstilizada(tablaMovs, 145, 75, 180, 145, 115, 85, 130), BorderLayout.CENTER);
+            JButton btnExportarVentas = boton("Exportar ventas a CSV");
+            btnExportarVentas.addActionListener(e -> exportarVentasCSV(this));
+            JPanel accionesMovs = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 7));
+            accionesMovs.add(btnExportarVentas);
+            panelMovs.add(accionesMovs, BorderLayout.SOUTH);
             subPestanasHistorial.addTab("Reporte de Movimientos", panelMovs);
 
             add(subPestanasHistorial, BorderLayout.CENTER);
