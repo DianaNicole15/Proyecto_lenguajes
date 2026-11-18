@@ -137,15 +137,28 @@ public class Main {
     public static List<String> listaDepartamentos = new ArrayList<>();
 
     static {
-        // Datos iniciales de prueba
-        listaDepartamentos.add("Electrónica");
-        listaDepartamentos.add("Línea Blanca");
-        listaDepartamentos.add("Abarrotes");
+        listaDepartamentos.add("Cómics");
+        listaDepartamentos.add("Libros");
+        listaDepartamentos.add("Mangas");
+        listaDepartamentos.add("Novelas");
+        listaDepartamentos.add("Enciclopedias");
 
-        listaProductos.add(new Producto("P001", "Laptop HP 15\"", 12500.00, "Electrónica", 8, 3));
-        listaProductos.add(new Producto("P002", "Mouse Inalámbrico", 350.00, "Electrónica", 2, 5)); // Bajo inventario
-        listaProductos.add(new Producto("P003", "Refrigerador LG", 9800.50, "Línea Blanca", 0, 2)); // Agotado
-        listaProductos.add(new Producto("P004", "Cafetera de Grano", 1450.00, "Línea Blanca", 12, 4));
+        // Los precios y las existencias son datos de prueba para la actividad.
+        listaProductos.add(new Producto("P001", "Boku no Hero", 169.00, "Mangas", 9, 3));
+        listaProductos.add(new Producto("P002", "Animal Human", 219.00, "Cómics", 6, 3));
+        listaProductos.add(new Producto("P003", "Civil War", 399.00, "Cómics", 2, 3));
+        listaProductos.add(new Producto("P004", "Batman: The Killing Joke", 329.00, "Cómics", 5, 2));
+        listaProductos.add(new Producto("P005", "Hábitos atómicos", 399.00, "Libros", 10, 3));
+        listaProductos.add(new Producto("P006", "La psicología del dinero", 349.00, "Libros", 7, 3));
+        listaProductos.add(new Producto("P007", "Sapiens: De animales a dioses", 459.00, "Libros", 6, 2));
+        listaProductos.add(new Producto("P008", "One Piece", 159.00, "Mangas", 12, 4));
+        listaProductos.add(new Producto("P009", "Dragon Ball", 179.00, "Mangas", 8, 3));
+        listaProductos.add(new Producto("P010", "Demon Slayer: Kimetsu no Yaiba", 169.00, "Mangas", 0, 3));
+        listaProductos.add(new Producto("P011", "Harry Potter y la piedra filosofal", 429.00, "Novelas", 7, 3));
+        listaProductos.add(new Producto("P012", "Cien años de soledad", 329.00, "Novelas", 5, 2));
+        listaProductos.add(new Producto("P013", "Orgullo y prejuicio", 249.00, "Novelas", 9, 3));
+        listaProductos.add(new Producto("P014", "El libro de la ciencia", 579.00, "Enciclopedias", 4, 2));
+        listaProductos.add(new Producto("P015", "Enciclopedia de los dinosaurios", 499.00, "Enciclopedias", 6, 2));
     }
 
     static Producto buscarPorCodigo(String codigo) {
@@ -269,7 +282,7 @@ public class Main {
         private int intentosFallidos = 0;
 
         public VentanaLogin() {
-            setTitle("Punto de venta - Inicio de sesión");
+            setTitle("Biblioteca - Inicio de sesión");
             setSize(470, 320);
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             setLocationRelativeTo(null);
@@ -355,7 +368,7 @@ public class Main {
         private JTabbedPane pestanas;
 
         public VentanaPrincipal() {
-            setTitle("Sistema Integral de Inventario y Ventas");
+            setTitle("Biblioteca - Inventario y ventas");
             setSize(1000, 650);
             setMinimumSize(new Dimension(800, 510));
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -380,7 +393,7 @@ public class Main {
 
             // Barra superior con el botón de cerrar sesión
             JPanel barraSuperior = new JPanel(new BorderLayout());
-            JLabel titulo = new JLabel("Punto de venta");
+            JLabel titulo = new JLabel("Biblioteca · Punto de venta");
             titulo.setFont(FUENTE.deriveFont(Font.BOLD));
             titulo.setBorder(BorderFactory.createEmptyBorder(0, 9, 0, 0));
             barraSuperior.add(titulo, BorderLayout.CENTER);
@@ -684,7 +697,7 @@ public class Main {
             campoRegistro(panelRegistrar, 0, "Código", txtRegCodigo);
             campoRegistro(panelRegistrar, 1, "Nombre", txtRegNombre);
             campoRegistro(panelRegistrar, 2, "Precio ($)", txtRegPrecio);
-            campoRegistro(panelRegistrar, 3, "Departamento", cmbRegDepartamento);
+            campoRegistro(panelRegistrar, 3, "Categoría", cmbRegDepartamento);
             campoRegistro(panelRegistrar, 4, "", franja("Inventario"));
             campoRegistro(panelRegistrar, 5, "Cantidad actual", txtRegStock);
             campoRegistro(panelRegistrar, 6, "Inventario mínimo", txtRegMinimo);
@@ -695,7 +708,7 @@ public class Main {
 
             // Pestaña 2: Listar / Modificar / Eliminar / Entradas
             JPanel panelGestion = new JPanel(new BorderLayout());
-            String[] cols = {"Código", "Nombre", "Precio", "Stock", "Stock Mín.", "Departamento"};
+            String[] cols = {"Código", "Nombre", "Precio", "Stock", "Stock Mín.", "Categoría"};
             modeloTablaAdmin = modeloTabla(cols);
             tablaAdmin = new JTable(modeloTablaAdmin);
             actualizarTablaInventario();
@@ -713,15 +726,15 @@ public class Main {
 
             subPestanasAdmin.addTab("Inventario & Modificaciones", panelGestion);
 
-            // Pestaña 3: Departamentos
+            // Pestaña 3: Categorías
             JPanel panelDeptos = new JPanel(new BorderLayout());
             JTextField txtNuevoDepto = new JTextField(15);
-            JButton btnGuardarDepto = boton("Guardar Departamento");
+            JButton btnGuardarDepto = boton("Guardar categoría");
             JPanel pDeptoForm = new JPanel(new GridBagLayout());
-            campoRegistro(pDeptoForm, 0, "", new JLabel("Nuevo departamento"));
+            campoRegistro(pDeptoForm, 0, "", new JLabel("Nueva categoría"));
             campoRegistro(pDeptoForm, 1, "Nombre", txtNuevoDepto);
             campoRegistro(pDeptoForm, 2, "", btnGuardarDepto);
-            panelDeptos.add(franja("Departamentos"), BorderLayout.NORTH);
+            panelDeptos.add(franja("Categorías"), BorderLayout.NORTH);
             JPanel zonaDeptos = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 9));
             zonaDeptos.add(pDeptoForm);
             panelDeptos.add(zonaDeptos, BorderLayout.CENTER);
@@ -737,7 +750,7 @@ public class Main {
             listaDeptos.setBorder(BorderFactory.createEmptyBorder());
             panelDeptos.add(listaDeptos, BorderLayout.WEST);
 
-            subPestanasAdmin.addTab("Departamentos", panelDeptos);
+            subPestanasAdmin.addTab("Categorías", panelDeptos);
 
             // Pestaña 4: Importar / Exportar Datos
             JPanel panelIO = new JPanel(new GridBagLayout());
@@ -757,7 +770,7 @@ public class Main {
                     String nombre = Validador.texto(txtRegNombre.getText(), "El nombre");
                     double precio = Validador.precio(txtRegPrecio.getText());
                     String depto = (String) cmbRegDepartamento.getSelectedItem();
-                    if (depto == null) throw new IllegalArgumentException("Registre primero un departamento.");
+                    if (depto == null) throw new IllegalArgumentException("Registre primero una categoría.");
                     int stock = Validador.entero(txtRegStock.getText(), "La cantidad actual", 0);
                     int min = Validador.entero(txtRegMinimo.getText(), "El stock mínimo", 0);
 
@@ -776,15 +789,15 @@ public class Main {
 
             btnGuardarDepto.addActionListener(e -> {
                 try {
-                    String nuevo = Validador.texto(txtNuevoDepto.getText(), "El nombre del departamento");
+                    String nuevo = Validador.texto(txtNuevoDepto.getText(), "El nombre de la categoría");
                     for (String d : listaDepartamentos) {
-                        if (d.equalsIgnoreCase(nuevo)) throw new IllegalArgumentException("El departamento \"" + d + "\" ya existe.");
+                        if (d.equalsIgnoreCase(nuevo)) throw new IllegalArgumentException("La categoría \"" + d + "\" ya existe.");
                     }
                     listaDepartamentos.add(nuevo);
                     actualizarComboDeptos();
                     actualizarListaDeptosText(txtAreaDeptos);
                     txtNuevoDepto.setText("");
-                    JOptionPane.showMessageDialog(this, "Departamento guardado con éxito.");
+                    JOptionPane.showMessageDialog(this, "Categoría guardada con éxito.");
                 } catch (IllegalArgumentException ex) {
                     JOptionPane.showMessageDialog(this, ex.getMessage(), "Datos inválidos", JOptionPane.ERROR_MESSAGE);
                 }
@@ -883,7 +896,7 @@ public class Main {
         }
 
         private void actualizarListaDeptosText(JTextArea area) {
-            area.setText("--- Departamentos Registrados ---\n");
+            area.setText("--- Categorías registradas ---\n");
             for (String d : listaDepartamentos) {
                 area.append("• " + d + "\n");
             }
@@ -933,7 +946,7 @@ public class Main {
 
             // 1. Reporte: Productos Bajos en Inventario / Agotados
             JPanel panelBajosInv = new JPanel(new BorderLayout());
-            modeloBajos = modeloTabla(new String[]{"Código", "Nombre", "Precio", "Existencia", "Inv. Mínimo", "Departamento"});
+            modeloBajos = modeloTabla(new String[]{"Código", "Nombre", "Precio", "Existencia", "Inv. Mínimo", "Categoría"});
             JTable tablaBajos = new JTable(modeloBajos);
             panelBajosInv.add(franja("Productos bajos en inventario"), BorderLayout.NORTH);
             panelBajosInv.add(tablaEstilizada(tablaBajos, 75, 210, 85, 100, 105, 130), BorderLayout.CENTER);
@@ -958,14 +971,14 @@ public class Main {
             cabeceraReporte.add(panelInfoValores, BorderLayout.CENTER);
             panelInvGeneral.add(cabeceraReporte, BorderLayout.NORTH);
 
-            modeloReporteInv = modeloTabla(new String[]{"Código", "Nombre", "Precio", "Existencia", "Valor en Inventario", "Departamento"});
+            modeloReporteInv = modeloTabla(new String[]{"Código", "Nombre", "Precio", "Existencia", "Valor en Inventario", "Categoría"});
             JTable tablaInvGen = new JTable(modeloReporteInv);
             panelInvGeneral.add(tablaEstilizada(tablaInvGen, 75, 195, 90, 90, 145, 130), BorderLayout.CENTER);
             subPestanasHistorial.addTab("Reporte de Inventario", panelInvGeneral);
 
             // 3. Reporte de Movimientos
             JPanel panelMovs = new JPanel(new BorderLayout());
-            modeloMovimientos = modeloTabla(new String[]{"Fecha y Hora", "Código", "Producto", "Tipo Movimiento", "Stock Anterior", "Cantidad", "Departamento"});
+            modeloMovimientos = modeloTabla(new String[]{"Fecha y Hora", "Código", "Producto", "Tipo Movimiento", "Stock Anterior", "Cantidad", "Categoría"});
             JTable tablaMovs = new JTable(modeloMovimientos);
             panelMovs.add(franja("Reporte de movimientos"), BorderLayout.NORTH);
             panelMovs.add(tablaEstilizada(tablaMovs, 145, 75, 180, 145, 115, 85, 130), BorderLayout.CENTER);
