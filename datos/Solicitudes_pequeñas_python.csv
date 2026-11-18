@@ -1,0 +1,6 @@
+﻿fecha,codigo,nombre,tipo,cantidad,antes,despues,precio,depto,detalle
+2026-11-17T20:20:09,002,Boku no hero,venta,1,10,9,200.0,Mangas,Caja / Venta
+2026-11-17T20:20:09,010,Dragon ball,venta,1,100,99,600.0,Mangas,Caja / Venta
+2026-11-17T20:20:09,008,Sapiens: De animales a dioses,venta,3,40,37,355.0,Libros,Caja / Venta
+2026-11-17T20:20:09,014,Orgullo y prejuicio,venta,2,100,98,450.0,Novelas,Caja / Venta
+2026-11-17T20:20:09,005,Batman: the killer joke,venta,1,30,29,540.0,Comics,Caja / Venta
