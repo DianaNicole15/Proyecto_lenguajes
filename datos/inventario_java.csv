@@ -1,0 +1,16 @@
+Codigo,Nombre,Precio,Stock,StockMinimo,Departamento
+P001,Boku no Hero,169.0,5,3,Mangas
+P002,Animal Human,219.0,1,3,Cómics
+P003,Civil War,399.0,1,3,Cómics
+P004,Batman: The Killing Joke,329.0,0,2,Cómics
+P005,Hábitos atómicos,399.0,6,3,Libros
+P006,La psicología del dinero,349.0,3,3,Libros
+P007,Sapiens: De animales a dioses,459.0,0,2,Libros
+P008,One Piece,159.0,8,4,Mangas
+P009,Dragon Ball,179.0,2,3,Mangas
+P010,Demon Slayer: Kimetsu no Yaiba,169.0,50,3,Mangas
+P011,Harry Potter y la piedra filosofal,429.0,17,3,Novelas
+P012,Cien años de soledad,329.0,33,2,Novelas
+P013,Orgullo y prejuicio,249.0,34,3,Novelas
+P014,El libro de la ciencia,579.0,4,2,Enciclopedias
+P015,Enciclopedia de los dinosaurios,499.0,26,2,Enciclopedias
