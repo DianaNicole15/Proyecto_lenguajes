@@ -1,0 +1,18 @@
+﻿codigo,nombre,precio,depto,cantidad,minimo
+001,Ceda,27.0,telas,10,3
+5456,Limite del engaño,10.0,General,15,1
+002,Boku no hero,200.0,Mangas,9,3
+003,Animal Human,189.0,Mangas,4,3
+004,Civil war,500.0,Comics,20,2
+005,Batman: the killer joke,540.0,Comics,29,5
+006,Hábitos atómicos,320.0,Libros,24,5
+007,La psicología del dinero,400.0,Libros,29,4
+008,Sapiens: De animales a dioses,355.0,Libros,36,5
+009,One piece,267.0,Mangas,98,8
+010,Dragon ball,600.0,Mangas,99,2
+011,Demon Slayer: Kimetsu no Yaiba,750.0,Mangas,198,5
+012,Harry Potter y la piedra filosofal,500.0,Novelas,199,5
+013,Cien años de soledad,230.0,Novelas,20,2
+014,Orgullo y prejuicio,450.0,Novelas,97,5
+015,El libro de la ciencia,250.0,Enciclopedias,99,1
+016,Enciclopedia de los dinosaurios,550.0,Enciclopedias,45,3

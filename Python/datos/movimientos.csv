@@ -1,0 +1,16 @@
+﻿fecha,codigo,nombre,tipo,cantidad,antes,despues,precio,depto,detalle
+2026-11-17T20:20:09,002,Boku no hero,venta,1,10,9,200.0,Mangas,Caja / Venta
+2026-11-17T20:20:09,010,Dragon ball,venta,1,100,99,600.0,Mangas,Caja / Venta
+2026-11-17T20:20:09,008,Sapiens: De animales a dioses,venta,3,40,37,355.0,Libros,Caja / Venta
+2026-11-17T20:20:09,014,Orgullo y prejuicio,venta,2,100,98,450.0,Novelas,Caja / Venta
+2026-11-17T20:20:09,005,Batman: the killer joke,venta,1,30,29,540.0,Comics,Caja / Venta
+2026-11-17T20:24:33,009,One piece,venta,1,100,99,267.0,Mangas,Caja / Venta
+2026-11-17T20:24:33,012,Harry Potter y la piedra filosofal,venta,1,200,199,500.0,Novelas,Caja / Venta
+2026-11-17T20:24:33,007,La psicología del dinero,venta,3,32,29,400.0,Libros,Caja / Venta
+2026-11-17T20:24:33,003,Animal Human,venta,2,6,4,189.0,Mangas,Caja / Venta
+2026-11-17T20:24:33,011,Demon Slayer: Kimetsu no Yaiba,venta,2,200,198,750.0,Mangas,Caja / Venta
+2026-11-17T20:26:31,015,El libro de la ciencia,venta,1,100,99,250.0,Enciclopedias,Caja / Venta
+2026-11-17T20:26:31,009,One piece,venta,1,99,98,267.0,Mangas,Caja / Venta
+2026-11-17T20:26:31,014,Orgullo y prejuicio,venta,1,98,97,450.0,Novelas,Caja / Venta
+2026-11-17T20:26:31,006,Hábitos atómicos,venta,1,25,24,320.0,Libros,Caja / Venta
+2026-11-17T20:26:31,008,Sapiens: De animales a dioses,venta,1,37,36,355.0,Libros,Caja / Venta
