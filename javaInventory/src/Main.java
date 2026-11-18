@@ -1,5 +1,6 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -7,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class Main {
@@ -84,7 +86,7 @@ public class Main {
         public static final double MAX_PRECIO = 1_000_000;
 
         public static String codigo(String valor) {
-            String c = valor == null ? "" : valor.trim().toUpperCase();
+            String c = valor == null ? "" : valor.strip().toUpperCase(Locale.ROOT);
             if (!c.matches("[A-Z0-9-]{1,20}")) {
                 throw new IllegalArgumentException("El código solo admite letras, números y guion (máximo 20 caracteres).");
             }
@@ -92,29 +94,31 @@ public class Main {
         }
 
         public static String texto(String valor, String campo) {
-            String t = valor == null ? "" : valor.trim();
+            String t = valor == null ? "" : valor.strip();
             if (t.isEmpty()) throw new IllegalArgumentException(campo + " es obligatorio.");
             if (t.length() > MAX_TEXTO) throw new IllegalArgumentException(campo + " no puede superar " + MAX_TEXTO + " caracteres.");
+            if (t.codePoints().anyMatch(Character::isISOControl)) {
+                throw new IllegalArgumentException(campo + " contiene caracteres no válidos.");
+            }
             return t;
         }
 
         public static double precio(String valor) {
-            double p;
-            try {
-                p = Double.parseDouble(valor == null ? "" : valor.trim().replace("$", ""));
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("El precio debe ser un número (ejemplo: 125.50).");
+            String texto = valor == null ? "" : valor.strip();
+            if (!texto.matches("\\$?(?:[0-9]+(?:[.,][0-9]{1,2})?|[.,][0-9]{1,2})")) {
+                throw new IllegalArgumentException("Escriba un precio con hasta dos decimales (ejemplo: 125.50 o 125,50).");
             }
-            if (Double.isNaN(p) || Double.isInfinite(p) || p <= 0 || p > MAX_PRECIO) {
+            double p = Double.parseDouble(texto.replace("$", "").replace(',', '.'));
+            if (p <= 0 || p > MAX_PRECIO) {
                 throw new IllegalArgumentException("El precio debe ser mayor a 0 y no superar " + (long) MAX_PRECIO + ".");
             }
-            return Math.round(p * 100.0) / 100.0;
+            return p;
         }
 
         public static int entero(String valor, String campo, int minimo) {
             int n;
             try {
-                n = Integer.parseInt(valor == null ? "" : valor.trim());
+                n = Integer.parseInt(valor == null ? "" : valor.strip());
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException(campo + " debe ser un número entero.");
             }
@@ -154,18 +158,106 @@ public class Main {
     // ==========================================
     // MÉTODO PRINCIPAL (PUNTO DE ENTRADA)
     // ==========================================
-    public static void main(String[] args) {
-        // Establecer apariencia nativa de la plataforma o Nimbus
-        try {
-            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (Exception ignored) {}
+    private static final Color FONDO = new Color(0xF2F2F2);
+    private static final Color BLANCO = Color.WHITE;
+    private static final Color CREMA = new Color(0xF3EEEA);
+    private static final Color CAMPO = new Color(0xE5E5E5);
+    private static final Color BORDE = new Color(0xA9AAAC);
+    private static final Color AZUL_CLARO = new Color(0xC4D6E1);
+    private static final Color AZUL_TABLA = new Color(0xB6C5CF);
+    private static final Color PETROLEO = new Color(0x4E7281);
+    private static final Color VINO = new Color(0x690832);
+    private static final Color TEXTO = new Color(0x171717);
+    private static final Font FUENTE = new Font("SansSerif", Font.PLAIN, 14);
 
-        SwingUtilities.invokeLater(() -> new VentanaLogin().setVisible(true));
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            aplicarTema();
+            new VentanaLogin().setVisible(true);
+        });
+    }
+
+    private static void aplicarTema() {
+        UIManager.put("Panel.background", BLANCO);
+        UIManager.put("Label.font", FUENTE);
+        UIManager.put("Label.foreground", TEXTO);
+        UIManager.put("Button.font", FUENTE.deriveFont(Font.BOLD));
+        UIManager.put("Button.background", CAMPO);
+        UIManager.put("TextField.font", FUENTE);
+        UIManager.put("PasswordField.font", FUENTE);
+        UIManager.put("TextField.background", CAMPO);
+        UIManager.put("ComboBox.background", CAMPO);
+        UIManager.put("ComboBox.font", FUENTE);
+        UIManager.put("TabbedPane.font", FUENTE.deriveFont(Font.BOLD));
+        UIManager.put("TabbedPane.background", CREMA);
+        UIManager.put("TabbedPane.selected", AZUL_CLARO);
+        UIManager.put("TabbedPane.contentAreaColor", BLANCO);
+        UIManager.put("TabbedPane.tabInsets", new Insets(6, 12, 6, 12));
+    }
+
+    private static JButton boton(String texto) {
+        JButton boton = new JButton(texto);
+        boton.setFont(FUENTE.deriveFont(Font.BOLD));
+        boton.setContentAreaFilled(false);
+        boton.setOpaque(true);
+        boton.setForeground(TEXTO);
+        boton.setBackground(CAMPO);
+        boton.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDE),
+                BorderFactory.createEmptyBorder(6, 10, 6, 10)));
+        return boton;
+    }
+
+    private static JLabel franja(String texto) {
+        JLabel etiqueta = new JLabel(texto);
+        etiqueta.setFont(FUENTE.deriveFont(Font.BOLD));
+        etiqueta.setOpaque(true);
+        etiqueta.setBackground(AZUL_CLARO);
+        etiqueta.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
+        return etiqueta;
+    }
+
+    private static DefaultTableModel modeloTabla(String[] columnas) {
+        return new DefaultTableModel(columnas, 0) {
+            @Override
+            public boolean isCellEditable(int fila, int columna) {
+                return false;
+            }
+        };
+    }
+
+    private static JScrollPane tablaEstilizada(JTable tabla, int... anchos) {
+        tabla.setFont(FUENTE);
+        tabla.setBackground(AZUL_TABLA);
+        tabla.setForeground(TEXTO);
+        tabla.setSelectionBackground(AZUL_CLARO);
+        tabla.setSelectionForeground(TEXTO);
+        tabla.setGridColor(new Color(0xD6E0E5));
+        tabla.setRowHeight(29);
+        tabla.setFillsViewportHeight(true);
+        for (int i = 0; i < anchos.length; i++) {
+            tabla.getColumnModel().getColumn(i).setPreferredWidth(anchos[i]);
+        }
+        DefaultTableCellRenderer encabezado = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable tabla, Object valor,
+                    boolean seleccionado, boolean foco, int fila, int columna) {
+                super.getTableCellRendererComponent(tabla, valor, false, false, fila, columna);
+                setFont(FUENTE.deriveFont(Font.BOLD));
+                setBackground(PETROLEO);
+                setForeground(BLANCO);
+                setHorizontalAlignment(SwingConstants.CENTER);
+                setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, AZUL_TABLA));
+                return this;
+            }
+        };
+        tabla.getTableHeader().setDefaultRenderer(encabezado);
+        tabla.getTableHeader().setPreferredSize(new Dimension(tabla.getPreferredSize().width, 34));
+        JScrollPane scroll = new JScrollPane(tabla);
+        scroll.setColumnHeaderView(tabla.getTableHeader());
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        scroll.getViewport().setBackground(AZUL_TABLA);
+        return scroll;
     }
 
     // ==========================================
@@ -178,40 +270,46 @@ public class Main {
 
         public VentanaLogin() {
             setTitle("Punto de venta - Inicio de sesión");
-            setSize(450, 290);
+            setSize(470, 320);
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             setLocationRelativeTo(null);
             setResizable(false);
 
             JPanel panel = new JPanel(null);
-            panel.setBackground(new Color(145, 128, 128)); // Tono similar a Figma
+            panel.setBackground(new Color(0x93827A));
 
             JLabel lblTitulo = new JLabel("Ingrese su usuario y contraseña.");
             lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 14));
-            lblTitulo.setForeground(Color.WHITE);
-            lblTitulo.setBounds(110, 30, 250, 25);
+            lblTitulo.setForeground(TEXTO);
+            lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
+            lblTitulo.setBounds(0, 22, 455, 25);
             panel.add(lblTitulo);
 
             JLabel lblUser = new JLabel("Usuario:");
-            lblUser.setForeground(Color.WHITE);
-            lblUser.setBounds(80, 80, 100, 25);
+            lblUser.setForeground(TEXTO);
+            lblUser.setBounds(88, 78, 100, 25);
             panel.add(lblUser);
 
             txtUsuario = new JTextField("admin");
-            txtUsuario.setBounds(80, 105, 280, 30);
+            txtUsuario.setBounds(88, 103, 280, 28);
+            txtUsuario.setBackground(BLANCO);
+            lblUser.setLabelFor(txtUsuario);
             panel.add(txtUsuario);
 
             JLabel lblPass = new JLabel("Contraseña:");
-            lblPass.setForeground(Color.WHITE);
-            lblPass.setBounds(80, 145, 100, 25);
+            lblPass.setForeground(TEXTO);
+            lblPass.setBounds(88, 143, 100, 25);
             panel.add(lblPass);
 
             txtContrasena = new JPasswordField("admin");
-            txtContrasena.setBounds(80, 170, 280, 30);
+            txtContrasena.setBounds(88, 168, 280, 28);
+            txtContrasena.setBackground(BLANCO);
+            lblPass.setLabelFor(txtContrasena);
             panel.add(txtContrasena);
 
-            JButton btnIngresar = new JButton("Ingresar");
-            btnIngresar.setBounds(160, 215, 120, 30);
+            JButton btnIngresar = boton("Ingresar");
+            btnIngresar.setBounds(168, 216, 120, 31);
+            btnIngresar.setBackground(AZUL_CLARO);
             panel.add(btnIngresar);
 
             btnIngresar.addActionListener(e -> iniciarSesion());
@@ -222,10 +320,10 @@ public class Main {
         }
 
         private void iniciarSesion() {
-            String user = txtUsuario.getText().trim();
+            String user = txtUsuario.getText().strip();
             String pass = new String(txtContrasena.getPassword());
 
-            if (user.isEmpty() || pass.isEmpty()) {
+            if (user.isEmpty() || pass.isBlank()) {
                 JOptionPane.showMessageDialog(this, "Escriba su usuario y contraseña.", "Datos incompletos", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -258,12 +356,13 @@ public class Main {
 
         public VentanaPrincipal() {
             setTitle("Sistema Integral de Inventario y Ventas");
-            setSize(950, 650);
+            setSize(1000, 650);
+            setMinimumSize(new Dimension(800, 510));
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             setLocationRelativeTo(null);
 
             pestanas = new JTabbedPane();
-            pestanas.setFont(new Font("SansSerif", Font.BOLD, 12));
+            pestanas.setBackground(CREMA);
 
             // Paneles basados en los diseños de Figma
             PanelCajaVenta panelCaja = new PanelCajaVenta();
@@ -280,14 +379,23 @@ public class Main {
             });
 
             // Barra superior con el botón de cerrar sesión
-            JPanel barraSuperior = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
-            JButton btnCerrarSesion = new JButton("Cerrar sesión");
+            JPanel barraSuperior = new JPanel(new BorderLayout());
+            JLabel titulo = new JLabel("Punto de venta");
+            titulo.setFont(FUENTE.deriveFont(Font.BOLD));
+            titulo.setBorder(BorderFactory.createEmptyBorder(0, 9, 0, 0));
+            barraSuperior.add(titulo, BorderLayout.CENTER);
+            JButton btnCerrarSesion = boton("Cerrar sesión");
+            btnCerrarSesion.setBackground(VINO);
+            btnCerrarSesion.setForeground(BLANCO);
             btnCerrarSesion.addActionListener(e -> cerrarSesion());
-            barraSuperior.add(btnCerrarSesion);
+            barraSuperior.add(btnCerrarSesion, BorderLayout.EAST);
 
-            setLayout(new BorderLayout());
-            add(barraSuperior, BorderLayout.NORTH);
-            add(pestanas, BorderLayout.CENTER);
+            JPanel contenido = new JPanel(new BorderLayout());
+            contenido.setBackground(FONDO);
+            contenido.setBorder(BorderFactory.createEmptyBorder(14, 16, 16, 16));
+            contenido.add(barraSuperior, BorderLayout.NORTH);
+            contenido.add(pestanas, BorderLayout.CENTER);
+            setContentPane(contenido);
         }
 
         private void cerrarSesion() {
@@ -320,53 +428,64 @@ public class Main {
 
         public PanelCajaVenta() {
             setLayout(new BorderLayout());
-            setBackground(new Color(245, 240, 235));
+            setBackground(BLANCO);
 
             // Panel Superior: Búsqueda y Código
-            JPanel panelTop = new JPanel(new GridLayout(2, 2, 5, 5));
-            panelTop.setBorder(BorderFactory.createTitledBorder("Procesamiento de Venta / Salida"));
+            JPanel panelTop = new JPanel(new BorderLayout());
+            JPanel busqueda = new JPanel(new GridLayout(2, 1, 0, 6));
+            busqueda.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+            JPanel campos = new JPanel(new GridLayout(2, 1, 0, 6));
+            campos.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 8));
 
-            panelTop.add(new JLabel("Código del producto:"));
-            txtCodigoScan = new JTextField();
-            panelTop.add(txtCodigoScan);
+            JLabel lblCodigo = new JLabel("Código del producto");
+            JLabel lblBusqueda = new JLabel("Buscar por nombre");
+            txtCodigoScan = new JTextField(27);
+            txtBusquedaNombre = new JTextField(27);
+            lblCodigo.setLabelFor(txtCodigoScan);
+            lblBusqueda.setLabelFor(txtBusquedaNombre);
+            busqueda.add(lblCodigo);
+            busqueda.add(lblBusqueda);
+            campos.add(txtCodigoScan);
+            campos.add(txtBusquedaNombre);
 
-            panelTop.add(new JLabel("Buscar producto por nombre:"));
-            txtBusquedaNombre = new JTextField();
-            panelTop.add(txtBusquedaNombre);
-
+            JPanel filaBusqueda = new JPanel(new BorderLayout());
+            filaBusqueda.add(busqueda, BorderLayout.WEST);
+            filaBusqueda.add(campos, BorderLayout.CENTER);
+            panelTop.add(filaBusqueda, BorderLayout.WEST);
             add(panelTop, BorderLayout.NORTH);
 
             // Tabla central de venta
-            String[] columnas = {"Código", "Producto", "Precio", "Cantidad a Vender", "Existencia Actual", "Categoría"};
-            modeloTablaVenta = new DefaultTableModel(columnas, 0);
+            String[] columnas = {"Código", "Producto", "Precio", "Cantidad", "Existencia", "Categoría"};
+            modeloTablaVenta = modeloTabla(columnas);
             tablaVenta = new JTable(modeloTablaVenta);
-            add(new JScrollPane(tablaVenta), BorderLayout.CENTER);
+            add(tablaEstilizada(tablaVenta, 76, 280, 90, 90, 95, 120), BorderLayout.CENTER);
 
             // Panel Inferior: Cobro y Acciones
             JPanel panelBottom = new JPanel(new BorderLayout());
 
-            JPanel subPanelAcciones = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            JPanel subPanelAcciones = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 13));
             subPanelAcciones.add(new JLabel("Cantidad:"));
             txtCantidadVenta = new JTextField("1", 5);
             subPanelAcciones.add(txtCantidadVenta);
 
-            JButton btnAgregarCarrito = new JButton("Agregar a Venta");
+            JButton btnAgregarCarrito = boton("Agregar a Venta");
             subPanelAcciones.add(btnAgregarCarrito);
 
-            JButton btnQuitar = new JButton("Quitar seleccionado");
+            JButton btnQuitar = boton("Quitar seleccionado");
             subPanelAcciones.add(btnQuitar);
 
-            JButton btnCobrar = new JButton("Cobrar / Salida");
-            btnCobrar.setFont(new Font("SansSerif", Font.BOLD, 14));
-            btnCobrar.setBackground(new Color(220, 220, 220));
-            subPanelAcciones.add(btnCobrar);
-
+            JButton btnCobrar = boton("Cobrar");
+            btnCobrar.setFont(FUENTE.deriveFont(Font.BOLD, 16f));
             panelBottom.add(subPanelAcciones, BorderLayout.WEST);
 
-            lblTotalPagar = new JLabel("$00.00", JLabel.RIGHT);
-            lblTotalPagar.setFont(new Font("SansSerif", Font.BOLD, 28));
-            lblTotalPagar.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 20));
-            panelBottom.add(lblTotalPagar, BorderLayout.EAST);
+            lblTotalPagar = new JLabel("$00.00", JLabel.CENTER);
+            lblTotalPagar.setFont(FUENTE.deriveFont(Font.BOLD, 28f));
+            lblTotalPagar.setPreferredSize(new Dimension(175, 45));
+            lblTotalPagar.setBorder(BorderFactory.createLineBorder(BORDE));
+            JPanel cobro = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 9));
+            cobro.add(btnCobrar);
+            cobro.add(lblTotalPagar);
+            panelBottom.add(cobro, BorderLayout.EAST);
 
             add(panelBottom, BorderLayout.SOUTH);
 
@@ -379,8 +498,8 @@ public class Main {
         }
 
         private void agregarItem() {
-            String codigo = txtCodigoScan.getText().trim();
-            String nombreBusqueda = txtBusquedaNombre.getText().trim().toLowerCase();
+            String codigo = txtCodigoScan.getText().strip();
+            String nombreBusqueda = txtBusquedaNombre.getText().strip();
 
             if (codigo.isEmpty() && nombreBusqueda.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Escriba un código o parte del nombre del producto.", "Aviso", JOptionPane.WARNING_MESSAGE);
@@ -389,9 +508,14 @@ public class Main {
 
             int cantidad;
             try {
+                if (!codigo.isEmpty()) {
+                    codigo = Validador.codigo(codigo);
+                } else {
+                    nombreBusqueda = Validador.texto(nombreBusqueda, "La búsqueda").toLowerCase(Locale.ROOT);
+                }
                 cantidad = Validador.entero(txtCantidadVenta.getText(), "La cantidad", 1);
             } catch (IllegalArgumentException e) {
-                JOptionPane.showMessageDialog(this, e.getMessage(), "Cantidad inválida", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Datos de venta inválidos", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -401,7 +525,7 @@ public class Main {
                 productoEncontrado = buscarPorCodigo(codigo);
             } else {
                 for (Producto p : listaProductos) {
-                    if (p.getNombre().toLowerCase().contains(nombreBusqueda)) {
+                    if (p.getNombre().toLowerCase(Locale.ROOT).contains(nombreBusqueda)) {
                         productoEncontrado = p;
                         break;
                     }
@@ -433,7 +557,7 @@ public class Main {
             modeloTablaVenta.addRow(new Object[]{
                     productoEncontrado.getCodigo(),
                     productoEncontrado.getNombre(),
-                    "$" + productoEncontrado.getPrecio(),
+                    String.format("$%.2f", productoEncontrado.getPrecio()),
                     cantidad,
                     productoEncontrado.getStock(),
                     productoEncontrado.getDepartamento()
@@ -542,41 +666,46 @@ public class Main {
             subPestanasAdmin = new JTabbedPane();
 
             // Pestaña 1: Registrar Producto
-            JPanel panelRegistrar = new JPanel(new GridLayout(7, 2, 10, 10));
-            panelRegistrar.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            JPanel vistaRegistro = new JPanel(new BorderLayout());
+            vistaRegistro.add(franja("Registrar producto"), BorderLayout.NORTH);
+            JPanel zonaRegistro = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 12));
+            vistaRegistro.add(zonaRegistro, BorderLayout.CENTER);
+            JPanel panelRegistrar = new JPanel(new GridBagLayout());
+            zonaRegistro.add(panelRegistrar);
 
-            txtRegCodigo = new JTextField();
-            txtRegNombre = new JTextField();
-            txtRegPrecio = new JTextField();
+            txtRegCodigo = new JTextField(23);
+            txtRegNombre = new JTextField(23);
+            txtRegPrecio = new JTextField(23);
             cmbRegDepartamento = new JComboBox<>();
             actualizarComboDeptos();
             txtRegStock = new JTextField();
             txtRegMinimo = new JTextField("3");
 
-            panelRegistrar.add(new JLabel("Código:")); panelRegistrar.add(txtRegCodigo);
-            panelRegistrar.add(new JLabel("Nombre:")); panelRegistrar.add(txtRegNombre);
-            panelRegistrar.add(new JLabel("Precio ($):")); panelRegistrar.add(txtRegPrecio);
-            panelRegistrar.add(new JLabel("Departamento:")); panelRegistrar.add(cmbRegDepartamento);
-            panelRegistrar.add(new JLabel("Cantidad Actual (Stock):")); panelRegistrar.add(txtRegStock);
-            panelRegistrar.add(new JLabel("Stock Mínimo (Alerta):")); panelRegistrar.add(txtRegMinimo);
+            campoRegistro(panelRegistrar, 0, "Código", txtRegCodigo);
+            campoRegistro(panelRegistrar, 1, "Nombre", txtRegNombre);
+            campoRegistro(panelRegistrar, 2, "Precio ($)", txtRegPrecio);
+            campoRegistro(panelRegistrar, 3, "Departamento", cmbRegDepartamento);
+            campoRegistro(panelRegistrar, 4, "", franja("Inventario"));
+            campoRegistro(panelRegistrar, 5, "Cantidad actual", txtRegStock);
+            campoRegistro(panelRegistrar, 6, "Inventario mínimo", txtRegMinimo);
+            JButton btnGuardar = boton("Guardar producto");
+            campoRegistro(panelRegistrar, 7, "", btnGuardar);
 
-            JButton btnGuardar = new JButton("Guardar producto");
-            panelRegistrar.add(new JLabel("")); panelRegistrar.add(btnGuardar);
-
-            subPestanasAdmin.addTab("Registrar", panelRegistrar);
+            subPestanasAdmin.addTab("Registrar", vistaRegistro);
 
             // Pestaña 2: Listar / Modificar / Eliminar / Entradas
             JPanel panelGestion = new JPanel(new BorderLayout());
             String[] cols = {"Código", "Nombre", "Precio", "Stock", "Stock Mín.", "Departamento"};
-            modeloTablaAdmin = new DefaultTableModel(cols, 0);
+            modeloTablaAdmin = modeloTabla(cols);
             tablaAdmin = new JTable(modeloTablaAdmin);
             actualizarTablaInventario();
-            panelGestion.add(new JScrollPane(tablaAdmin), BorderLayout.CENTER);
+            panelGestion.add(franja("Inventario"), BorderLayout.NORTH);
+            panelGestion.add(tablaEstilizada(tablaAdmin, 80, 225, 90, 95, 100, 150), BorderLayout.CENTER);
 
             JPanel panelBotonesAccion = new JPanel();
-            JButton btnModificar = new JButton("Modificar Stock / Precio");
-            JButton btnEliminar = new JButton("Eliminar Producto");
-            JButton btnEntradaMercancia = new JButton("Registrar Entrada de Mercancía");
+            JButton btnModificar = boton("Modificar Stock / Precio");
+            JButton btnEliminar = boton("Eliminar Producto");
+            JButton btnEntradaMercancia = boton("Registrar Entrada de Mercancía");
             panelBotonesAccion.add(btnModificar);
             panelBotonesAccion.add(btnEliminar);
             panelBotonesAccion.add(btnEntradaMercancia);
@@ -587,24 +716,33 @@ public class Main {
             // Pestaña 3: Departamentos
             JPanel panelDeptos = new JPanel(new BorderLayout());
             JTextField txtNuevoDepto = new JTextField(15);
-            JButton btnGuardarDepto = new JButton("Guardar Departamento");
-            JPanel pDeptoForm = new JPanel();
-            pDeptoForm.add(new JLabel("Nombre del Departamento:"));
-            pDeptoForm.add(txtNuevoDepto);
-            pDeptoForm.add(btnGuardarDepto);
-            panelDeptos.add(pDeptoForm, BorderLayout.NORTH);
+            JButton btnGuardarDepto = boton("Guardar Departamento");
+            JPanel pDeptoForm = new JPanel(new GridBagLayout());
+            campoRegistro(pDeptoForm, 0, "", new JLabel("Nuevo departamento"));
+            campoRegistro(pDeptoForm, 1, "Nombre", txtNuevoDepto);
+            campoRegistro(pDeptoForm, 2, "", btnGuardarDepto);
+            panelDeptos.add(franja("Departamentos"), BorderLayout.NORTH);
+            JPanel zonaDeptos = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 9));
+            zonaDeptos.add(pDeptoForm);
+            panelDeptos.add(zonaDeptos, BorderLayout.CENTER);
 
             JTextArea txtAreaDeptos = new JTextArea();
             txtAreaDeptos.setEditable(false);
             actualizarListaDeptosText(txtAreaDeptos);
-            panelDeptos.add(new JScrollPane(txtAreaDeptos), BorderLayout.CENTER);
+            txtAreaDeptos.setBackground(AZUL_TABLA);
+            txtAreaDeptos.setFont(FUENTE);
+            txtAreaDeptos.setBorder(BorderFactory.createEmptyBorder(7, 8, 7, 8));
+            JScrollPane listaDeptos = new JScrollPane(txtAreaDeptos);
+            listaDeptos.setPreferredSize(new Dimension(225, 0));
+            listaDeptos.setBorder(BorderFactory.createEmptyBorder());
+            panelDeptos.add(listaDeptos, BorderLayout.WEST);
 
             subPestanasAdmin.addTab("Departamentos", panelDeptos);
 
             // Pestaña 4: Importar / Exportar Datos
             JPanel panelIO = new JPanel(new GridBagLayout());
-            JButton btnExportarJSON = new JButton("Exportar Datos a JSON / CSV");
-            JButton btnImportarJSON = new JButton("Importar Datos de Inventario");
+            JButton btnExportarJSON = boton("Exportar datos a CSV");
+            JButton btnImportarJSON = boton("Importar Datos de Inventario");
             panelIO.add(btnExportarJSON);
             panelIO.add(new JLabel("   "));
             panelIO.add(btnImportarJSON);
@@ -721,6 +859,22 @@ public class Main {
             btnImportarJSON.addActionListener(e -> JOptionPane.showMessageDialog(this, "Simulación de importación masiva completada con éxito."));
         }
 
+        private void campoRegistro(JPanel panel, int fila, String titulo, Component campo) {
+            GridBagConstraints c = new GridBagConstraints();
+            c.gridx = 0;
+            c.gridy = fila;
+            c.anchor = GridBagConstraints.WEST;
+            c.insets = new Insets(4, 5, 4, 5);
+            if (!titulo.isEmpty()) {
+                JLabel etiqueta = new JLabel(titulo);
+                etiqueta.setLabelFor(campo);
+                panel.add(etiqueta, c);
+            }
+            c.gridx = 1;
+            c.fill = GridBagConstraints.HORIZONTAL;
+            panel.add(campo, c);
+        }
+
         public void actualizarComboDeptos() {
             cmbRegDepartamento.removeAllItems();
             for (String d : listaDepartamentos) {
@@ -779,11 +933,14 @@ public class Main {
 
             // 1. Reporte: Productos Bajos en Inventario / Agotados
             JPanel panelBajosInv = new JPanel(new BorderLayout());
-            modeloBajos = new DefaultTableModel(new String[]{"Código", "Nombre", "Precio", "Existencia", "Inv. Mínimo", "Departamento"}, 0);
+            modeloBajos = modeloTabla(new String[]{"Código", "Nombre", "Precio", "Existencia", "Inv. Mínimo", "Departamento"});
             JTable tablaBajos = new JTable(modeloBajos);
-            panelBajosInv.add(new JScrollPane(tablaBajos), BorderLayout.CENTER);
-            JButton btnActualizarBajos = new JButton("Actualizar Reporte de Alertas");
-            panelBajosInv.add(btnActualizarBajos, BorderLayout.SOUTH);
+            panelBajosInv.add(franja("Productos bajos en inventario"), BorderLayout.NORTH);
+            panelBajosInv.add(tablaEstilizada(tablaBajos, 75, 210, 85, 100, 105, 130), BorderLayout.CENTER);
+            JButton btnActualizarBajos = boton("Actualizar Reporte de Alertas");
+            JPanel accionesBajos = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 7));
+            accionesBajos.add(btnActualizarBajos);
+            panelBajosInv.add(accionesBajos, BorderLayout.SOUTH);
             subPestanasHistorial.addTab("Productos Bajos / Agotados", panelBajosInv);
 
             // 2. Reporte: Inventario General y Valor Total
@@ -795,18 +952,23 @@ public class Main {
             lblCantidadTotalProd.setFont(new Font("SansSerif", Font.BOLD, 16));
             panelInfoValores.add(lblCostoTotalInv);
             panelInfoValores.add(lblCantidadTotalProd);
-            panelInvGeneral.add(panelInfoValores, BorderLayout.NORTH);
+            panelInfoValores.setBorder(BorderFactory.createEmptyBorder(9, 8, 9, 8));
+            JPanel cabeceraReporte = new JPanel(new BorderLayout());
+            cabeceraReporte.add(franja("Reporte de inventario"), BorderLayout.NORTH);
+            cabeceraReporte.add(panelInfoValores, BorderLayout.CENTER);
+            panelInvGeneral.add(cabeceraReporte, BorderLayout.NORTH);
 
-            modeloReporteInv = new DefaultTableModel(new String[]{"Código", "Nombre", "Precio", "Existencia", "Valor en Inventario", "Departamento"}, 0);
+            modeloReporteInv = modeloTabla(new String[]{"Código", "Nombre", "Precio", "Existencia", "Valor en Inventario", "Departamento"});
             JTable tablaInvGen = new JTable(modeloReporteInv);
-            panelInvGeneral.add(new JScrollPane(tablaInvGen), BorderLayout.CENTER);
+            panelInvGeneral.add(tablaEstilizada(tablaInvGen, 75, 195, 90, 90, 145, 130), BorderLayout.CENTER);
             subPestanasHistorial.addTab("Reporte de Inventario", panelInvGeneral);
 
             // 3. Reporte de Movimientos
             JPanel panelMovs = new JPanel(new BorderLayout());
-            modeloMovimientos = new DefaultTableModel(new String[]{"Fecha y Hora", "Código", "Producto", "Tipo Movimiento", "Stock Anterior", "Cantidad", "Departamento"}, 0);
+            modeloMovimientos = modeloTabla(new String[]{"Fecha y Hora", "Código", "Producto", "Tipo Movimiento", "Stock Anterior", "Cantidad", "Departamento"});
             JTable tablaMovs = new JTable(modeloMovimientos);
-            panelMovs.add(new JScrollPane(tablaMovs), BorderLayout.CENTER);
+            panelMovs.add(franja("Reporte de movimientos"), BorderLayout.NORTH);
+            panelMovs.add(tablaEstilizada(tablaMovs, 145, 75, 180, 145, 115, 85, 130), BorderLayout.CENTER);
             subPestanasHistorial.addTab("Reporte de Movimientos", panelMovs);
 
             add(subPestanasHistorial, BorderLayout.CENTER);
