@@ -1,0 +1,98 @@
+[
+  {
+    "codigo": "E001",
+    "nombre": "Audífonos Bluetooth",
+    "categoria": "Electrónica",
+    "precio": 450.0,
+    "existencia": 25,
+    "stockMinimo": 10
+  },
+  {
+    "codigo": "E002",
+    "nombre": "Cable USB-C",
+    "categoria": "Electrónica",
+    "precio": 80.0,
+    "existencia": 8,
+    "stockMinimo": 15
+  },
+  {
+    "codigo": "E003",
+    "nombre": "Mouse inalámbrico",
+    "categoria": "Electrónica",
+    "precio": 220.0,
+    "existencia": 0,
+    "stockMinimo": 5
+  },
+  {
+    "codigo": "P001",
+    "nombre": "Cuaderno profesional",
+    "categoria": "Papelería",
+    "precio": 45.5,
+    "existencia": 120,
+    "stockMinimo": 30
+  },
+  {
+    "codigo": "P002",
+    "nombre": "Bolígrafos caja 12",
+    "categoria": "Papelería",
+    "precio": 60.0,
+    "existencia": 14,
+    "stockMinimo": 20
+  },
+  {
+    "codigo": "P003",
+    "nombre": "Marcadores permanentes",
+    "categoria": "Papelería",
+    "precio": 95.0,
+    "existencia": 40,
+    "stockMinimo": 10
+  },
+  {
+    "codigo": "A001",
+    "nombre": "Galletas integrales",
+    "categoria": "Alimentos",
+    "precio": 28.0,
+    "existencia": 60,
+    "stockMinimo": 20
+  },
+  {
+    "codigo": "A002",
+    "nombre": "Café molido 500g",
+    "categoria": "Alimentos",
+    "precio": 145.0,
+    "existencia": 5,
+    "stockMinimo": 10
+  },
+  {
+    "codigo": "A003",
+    "nombre": "Agua embotellada 1L",
+    "categoria": "Alimentos",
+    "precio": 12.0,
+    "existencia": 200,
+    "stockMinimo": 50
+  },
+  {
+    "codigo": "L001",
+    "nombre": "Detergente 1kg",
+    "categoria": "Limpieza",
+    "precio": 52.0,
+    "existencia": 30,
+    "stockMinimo": 10
+  },
+  {
+    "codigo": "L002",
+    "nombre": "Cloro 1L",
+    "categoria": "Limpieza",
+    "precio": 22.5,
+    "existencia": 0,
+    "stockMinimo": 10
+  },
+  {
+    "codigo": "L003",
+    "nombre": "Jabón líquido",
+    "categoria": "Limpieza",
+    "precio": 38.0,
+    "existencia": 18,
+    "stockMinimo": 15
+  }
+]

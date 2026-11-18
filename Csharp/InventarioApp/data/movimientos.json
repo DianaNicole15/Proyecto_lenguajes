@@ -1,0 +1,62 @@
+[
+  {
+    "codigo": "E002",
+    "tipo": "Entrada",
+    "cantidad": 20,
+    "motivo": "Reposición proveedor"
+  },
+  {
+    "codigo": "E003",
+    "tipo": "Entrada",
+    "cantidad": 10,
+    "motivo": "Reposición proveedor"
+  },
+  {
+    "codigo": "P002",
+    "tipo": "Salida",
+    "cantidad": 5,
+    "motivo": "Venta"
+  },
+  {
+    "codigo": "A002",
+    "tipo": "Salida",
+    "cantidad": 6,
+    "motivo": "Venta (excede existencia)"
+  },
+  {
+    "codigo": "L002",
+    "tipo": "Salida",
+    "cantidad": 1,
+    "motivo": "Venta (producto agotado)"
+  },
+  {
+    "codigo": "L003",
+    "tipo": "Salida",
+    "cantidad": 5,
+    "motivo": "Venta"
+  },
+  {
+    "codigo": "A003",
+    "tipo": "Salida",
+    "cantidad": 50,
+    "motivo": "Venta mayoreo"
+  },
+  {
+    "codigo": "E001",
+    "tipo": "Salida",
+    "cantidad": 5,
+    "motivo": "Venta"
+  },
+  {
+    "codigo": "X999",
+    "tipo": "Entrada",
+    "cantidad": 5,
+    "motivo": "Código inexistente"
+  },
+  {
+    "codigo": "P001",
+    "tipo": "Entrada",
+    "cantidad": 30,
+    "motivo": "Reposición proveedor"
+  }
+]
